@@ -22,4 +22,3 @@ class Patient extends Model
         return $this->hasMany(Appointment::class);
     }
 }
-?>
