@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nom');
             $table->string('prenom');
             $table->string('login')->unique();
-            $table->string('telephone');
+            $table->string('telephone')->nullable();
             $table->string('email')->unique();
             $table->string('password');
             // On utilise un string ou enum pour le rôle car c'est plus simple avec Laravel Spatie ou Gates

@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('consultations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('doctor_id')->constrained('doctors');
-            $table->foreignId('appointment_id')->nullable()->constrained('appointments');
+            $table->foreignId('doctor_id')->constrained('doctors')->onDelete('cascade');
+            $table->foreignId('appointment_id')->constrained('appointments')->onDelete('cascade');
+            $table->foreignId('dossier_medical_id')->constrained('dossier_medicals')->onDelete('cascade');
             $table->date('date');
-            $table->text('observations');
+            $table->text('observations')->nullable();
             $table->timestamps();
         });
     }
