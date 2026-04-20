@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\AdminService;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
 class AdminController extends Controller
@@ -17,156 +16,84 @@ class AdminController extends Controller
     }
 
     /**
-     * Register a new admin
-     * POST /admins/register
-     */
-    public function register(Request $request)
-    {
-        try {
-            $data = $request->validate([
-                'nom' => 'required|string|max:255',
-                'prenom' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:8|confirmed',
-                'department' => 'nullable|string|max:255',
-                'permissions' => 'nullable|string|max:255',
-                'telephone' => 'nullable|string|max:20',
-            ]);
-
-            $admin = $this->adminService->registerAdmin($data);
-
-            return response()->json([
-                'message' => 'Admin registered successfully',
-                'data' => [
-                    'admin_id' => $admin->id,
-                    'nom' => $admin->user->nom,
-                    'email' => $admin->user->email,
-                    'department' => $admin->department,
-                ]
-            ], 201);
-
-        } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Registration failed',
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
-    /**
-     * Get all admins
-     * GET /admins
+     * Liste de tous les administrateurs
      */
     public function index()
     {
-        try {
-            $admins = $this->adminService->getAllAdmins();
-
-            return response()->json([
-                'message' => 'Admins retrieved successfully',
-                'count' => $admins->count(),
-                'data' => $admins->map(function ($admin) {
-                    return [
-                        'id' => $admin->id,
-                        'nom' => $admin->user->nom,
-                        'prenom' => $admin->user->prenom,
-                        'email' => $admin->user->email,
-                        'department' => $admin->department,
-                        'telephone' => $admin->user->telephone,
-                    ];
-                })
-            ], 200);
-
-        } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Failed to retrieve admins',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        $admins = $this->adminService->getAllAdmins();
+        return view('admins.index', compact('admins'));
     }
 
     /**
-     * Get admin by ID
-     * GET /admins/{id}
+     * Formulaire d'ajout d'un nouvel admin
      */
-    public function show($id)
+    public function create()
     {
+        return view('admins.create');
+    }
+
+    /**
+     * Enregistrement d'un admin
+     */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'nom' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'department' => 'nullable|string|max:255',
+            'telephone' => 'nullable|string|max:20',
+        ]);
+
         try {
-            $admin = $this->adminService->getAdminById($id);
-
-            return response()->json([
-                'message' => 'Admin retrieved successfully',
-                'data' => [
-                    'id' => $admin->id,
-                    'nom' => $admin->user->nom,
-                    'prenom' => $admin->user->prenom,
-                    'email' => $admin->user->email,
-                    'department' => $admin->department,
-                    'permissions' => $admin->permissions,
-                    'telephone' => $admin->user->telephone,
-                    'created_at' => $admin->created_at,
-                ]
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Admin not found'], 404);
+            $this->adminService->registerAdmin($data);
+            return redirect()->route('admins.index')->with('success', 'Administrateur ajouté avec succès.');
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return back()->withInput()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 
     /**
-     * Update admin
-     * PUT /admins/{id}
+     * Formulaire de modification
+     */
+    public function edit($id)
+    {
+        $admin = $this->adminService->getAdminById($id);
+        return view('admins.edit', compact('admin'));
+    }
+
+    /**
+     * Mise à jour
      */
     public function update(Request $request, $id)
     {
+        $data = $request->validate([
+            'nom' => 'nullable|string|max:255',
+            'prenom' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $id, // Attention: il faut l'ID du User ici
+            'department' => 'nullable|string|max:255',
+            'telephone' => 'nullable|string|max:20',
+        ]);
+
         try {
-            $data = $request->validate([
-                'nom' => 'nullable|string|max:255',
-                'prenom' => 'nullable|string|max:255',
-                'email' => 'nullable|email|unique:users,email,' . $id,
-                'department' => 'nullable|string|max:255',
-                'permissions' => 'nullable|string|max:255',
-                'telephone' => 'nullable|string|max:20',
-            ]);
-
-            $admin = $this->adminService->updateAdmin($id, $data);
-
-            return response()->json([
-                'message' => 'Admin updated successfully',
-                'data' => [
-                    'id' => $admin->id,
-                    'nom' => $admin->user->nom,
-                    'email' => $admin->user->email,
-                    'department' => $admin->department,
-                ]
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Admin not found'], 404);
+            $this->adminService->updateAdmin($id, $data);
+            return redirect()->route('admins.index')->with('success', 'Profil admin mis à jour.');
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return back()->with('error', 'Échec de la mise à jour.');
         }
     }
 
     /**
-     * Delete admin
-     * DELETE /admins/{id}
+     * Suppression
      */
     public function destroy($id)
     {
         try {
             $this->adminService->deleteAdmin($id);
-
-            return response()->json([
-                'message' => 'Admin deleted successfully'
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Admin not found'], 404);
+            return redirect()->route('admins.index')->with('success', 'Admin supprimé.');
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return back()->with('error', 'Suppression impossible.');
         }
     }
 }

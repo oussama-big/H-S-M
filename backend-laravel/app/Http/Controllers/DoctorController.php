@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\DoctorService;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
 class DoctorController extends Controller
@@ -17,183 +16,95 @@ class DoctorController extends Controller
     }
 
     /**
-     * Register a new doctor
-     * POST /doctors
-     */
-    public function register(Request $request)
-    {
-        try {
-            // Validation
-            $data = $request->validate([
-                'nom' => 'required|string|max:255',
-                'prenom' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:8|confirmed',
-                'specialization' => 'required|string|max:255',
-                'license_number' => 'required|string|unique:doctors,license_number',
-                'telephone' => 'nullable|string|max:20',
-            ]);
-
-            // Create doctor
-            $doctor = $this->doctorService->registerDoctor($data);
-
-            return response()->json([
-                'message' => 'Doctor registered successfully',
-                'data' => [
-                    'doctor_id' => $doctor->id,
-                    'nom' => $doctor->user->nom,
-                    'prenom' => $doctor->user->prenom,
-                    'email' => $doctor->user->email,
-                    'specialization' => $doctor->specialization,
-                    'license_number' => $doctor->license_number,
-                ]
-            ], 201);
-
-        } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Registration failed',
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
-    /**
-     * Get all doctors
-     * GET /doctors
+     * Liste de tous les médecins (Vue)
      */
     public function index()
     {
+        $doctors = $this->doctorService->getAllDoctors();
+        return view('doctors.index', compact('doctors'));
+    }
+
+    /**
+     * Formulaire d'ajout d'un médecin
+     */
+    public function create()
+    {
+        return view('doctors.create');
+    }
+
+    /**
+     * Enregistrement du médecin
+     */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'nom' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'specialization' => 'required|string|max:255',
+            'license_number' => 'required|string|unique:doctors,license_number',
+            'telephone' => 'nullable|string|max:20',
+        ]);
+
         try {
-            $doctors = $this->doctorService->getAllDoctors();
-
-            return response()->json([
-                'message' => 'Doctors retrieved successfully',
-                'count' => $doctors->count(),
-                'data' => $doctors->map(function ($doctor) {
-                    return [
-                        'id' => $doctor->id,
-                        'nom' => $doctor->user->nom,
-                        'prenom' => $doctor->user->prenom,
-                        'email' => $doctor->user->email,
-                        'specialization' => $doctor->specialization,
-                        'license_number' => $doctor->license_number,
-                        'telephone' => $doctor->user->telephone,
-                    ];
-                })
-            ], 200);
-
+            $this->doctorService->registerDoctor($data);
+            return redirect()->route('doctors.index')->with('success', 'Médecin enregistré avec succès.');
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Failed to retrieve doctors',
-                'message' => $e->getMessage()
-            ], 500);
+            return back()->withInput()->with('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
         }
     }
 
     /**
-     * Get doctor by ID with all information
-     * GET /doctors/{id}
+     * Profil détaillé du médecin
      */
     public function show($id)
     {
-        try {
-            $doctor = $this->doctorService->getDoctorById($id);
-
-            return response()->json([
-                'message' => 'Doctor retrieved successfully',
-                'data' => [
-                    'id' => $doctor->id,
-                    'nom' => $doctor->user->nom,
-                    'prenom' => $doctor->user->prenom,
-                    'email' => $doctor->user->email,
-                    'specialization' => $doctor->specialization,
-                    'license_number' => $doctor->license_number,
-                    'telephone' => $doctor->user->telephone,
-                    'role' => $doctor->user->role,
-                    'created_at' => $doctor->created_at,
-                    'appointments_count' => $doctor->appointments->count(),
-                    'consultations_count' => $doctor->consultations->count(),
-                ]
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Doctor not found'
-            ], 404);
-        } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Failed to retrieve doctor',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        $doctor = $this->doctorService->getDoctorById($id);
+        return view('doctors.show', compact('doctor'));
     }
 
     /**
-     * Update doctor information
-     * PUT /doctors/{id}
+     * Formulaire d'édition
+     */
+    public function edit($id)
+    {
+        $doctor = $this->doctorService->getDoctorById($id);
+        return view('doctors.edit', compact('doctor'));
+    }
+
+    /**
+     * Mise à jour des informations
      */
     public function update(Request $request, $id)
     {
+        $data = $request->validate([
+            'nom' => 'nullable|string|max:255',
+            'prenom' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $id, // Assurez-vous que l'ID est celui du User
+            'specialization' => 'nullable|string|max:255',
+            'license_number' => 'nullable|string|unique:doctors,license_number,' . $id,
+            'telephone' => 'nullable|string|max:20',
+        ]);
+
         try {
-            // Validation
-            $data = $request->validate([
-                'nom' => 'nullable|string|max:255',
-                'prenom' => 'nullable|string|max:255',
-                'email' => 'nullable|email|unique:users,email,' . $id,
-                'specialization' => 'nullable|string|max:255',
-                'license_number' => 'nullable|string|unique:doctors,license_number,' . $id,
-                'telephone' => 'nullable|string|max:20',
-            ]);
-
-            $doctor = $this->doctorService->updateDoctor($id, $data);
-
-            return response()->json([
-                'message' => 'Doctor updated successfully',
-                'data' => [
-                    'id' => $doctor->id,
-                    'nom' => $doctor->user->nom,
-                    'prenom' => $doctor->user->prenom,
-                    'email' => $doctor->user->email,
-                    'specialization' => $doctor->specialization,
-                    'license_number' => $doctor->license_number,
-                    'telephone' => $doctor->user->telephone,
-                ]
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Doctor not found'
-            ], 404);
+            $this->doctorService->updateDoctor($id, $data);
+            return redirect()->route('doctors.index')->with('success', 'Informations du médecin mises à jour.');
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Update failed',
-                'message' => $e->getMessage()
-            ], 400);
+            return back()->with('error', 'Échec de la mise à jour.');
         }
     }
 
     /**
-     * Delete doctor
-     * DELETE /doctors/{id}
+     * Suppression d'un médecin
      */
     public function destroy($id)
     {
         try {
             $this->doctorService->deleteDoctor($id);
-
-            return response()->json([
-                'message' => 'Doctor deleted successfully'
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Doctor not found'
-            ], 404);
+            return redirect()->route('doctors.index')->with('success', 'Médecin supprimé du système.');
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Delete failed',
-                'message' => $e->getMessage()
-            ], 500);
+            return back()->with('error', 'Suppression impossible.');
         }
     }
 }
