@@ -29,6 +29,11 @@ class User extends Authenticatable
         return $this->hasOne(Doctor::class, 'id');
     }
 
+    // Relation vers le profil Secretaire
+    public function secretary() {
+        return $this->hasOne(Secretary::class, 'id');
+    }
+
     // Notifications
     public function notifications() {
         return $this->hasMany(Notification::class);

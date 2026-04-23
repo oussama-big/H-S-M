@@ -7,17 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 class Doctor extends Model
 {
     public $incrementing = false;
-    protected $fillable = ['id', 'specialization', 'license_number'];
 
-    public function user() {
+    protected $fillable = ['id', 'specialization', 'license_number', 'cabinet_id'];
+
+    public function user()
+    {
         return $this->belongsTo(User::class, 'id');
     }
 
-    public function appointments() {
+    public function cabinet()
+    {
+        return $this->belongsTo(Cabinet::class);
+    }
+
+    public function appointments()
+    {
         return $this->hasMany(Appointment::class);
     }
 
-    public function consultations() {
+    public function consultations()
+    {
         return $this->hasMany(Consultation::class);
     }
 }

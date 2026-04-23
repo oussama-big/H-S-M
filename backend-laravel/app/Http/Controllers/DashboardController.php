@@ -2,39 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Patient;
-use App\Models\Doctor;
-use App\Models\Appointment;
-use App\Models\Consultation;
+use App\Services\AdminDashboardService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
+    private AdminDashboardService $adminDashboardService;
+
+    public function __construct(AdminDashboardService $adminDashboardService)
+    {
+        $this->adminDashboardService = $adminDashboardService;
+    }
+
     public function index()
     {
         $user = Auth::user();
 
-        // Statistiques globales pour l'Admin ou Secrétaire
-        $stats = [
-            'total_patients' => Patient::count(),
-            'total_doctors' => Doctor::count(),
-            'today_appointments' => Appointment::whereDate('appointment_date', today())->count(),
-            'pending_appointments' => Appointment::where('status', 'PREVU')->count(),
-        ];
+        return match ($user->role) {
+            'ADMIN' => redirect()->route('admin.dashboard'),
+            'SECRETAIRE' => redirect()->route('secretary.dashboard'),
+            'MEDECIN' => redirect()->route('doctor.dashboard'),
+            'PATIENT' => redirect()->route('patient.dashboard'),
+            default => redirect()->route('dashboard'),
+        };
+    }
 
-        // Activités récentes (5 dernières consultations)
-        $recent_activities = Consultation::with(['doctor.user', 'appointment.patient.user'])
-            ->latest()
-            ->take(5)
-            ->get();
+    public function adminData(Request $request)
+    {
+        $user = $request->user();
 
-        // Si l'utilisateur est un MÉDECIN, on filtre ses propres stats
-        if ($user->role === 'MEDECIN') {
-            $stats['my_appointments'] = Appointment::where('doctor_id', $user->doctor->id)
-                ->where('status', 'PREVU')->count();
-            $stats['my_consultations'] = Consultation::where('doctor_id', $user->doctor->id)->count();
+        if (! $user || $user->role !== 'ADMIN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Acces reserve au backoffice.',
+            ], 403);
         }
 
-        return view('dashboard', compact('stats', 'recent_activities'));
+        return response()->json([
+            'success' => true,
+            'data' => $this->adminDashboardService->getDashboardData($user->id),
+        ]);
     }
 }

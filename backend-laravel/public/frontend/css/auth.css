@@ -1,0 +1,468 @@
+/* ================================================================
+   MEDICARE — AUTH NEUMORPHISME
+   Style : panneau coulissant Login ↔ Inscription
+   Palette : Teal #0f8b8d / Cyan #14b8a6 / Sky #38bdf8
+   Base neumorphe : #e8f4f5 (légèrement teinté santé)
+   ================================================================ */
+
+/* ── Variables ── */
+:root {
+    --nm-bg:       #e8f4f5;
+    --nm-shadow1:  #c5dde0;
+    --nm-shadow2:  #ffffff;
+    --nm-text:     #14313c;
+    --nm-muted:    #6b9099;
+    --nm-primary:  #0f8b8d;
+    --nm-grad:     linear-gradient(135deg, #0f8b8d 0%, #14b8a6 50%, #38bdf8 100%);
+    --nm-grad-btn: linear-gradient(145deg, #0f8b8d, #14b8a6);
+    --nm-green:    #22c55e;
+    --nm-red:      #ef4444;
+    --font:        'Plus Jakarta Sans', sans-serif;
+    --transition:  1.25s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    --trans-fast:  0.25s ease;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+    margin: 0; padding: 0;
+    box-sizing: border-box;
+}
+
+/* ── Body ── */
+.auth-body {
+    width: 100%; min-height: 100vh;
+    display: flex; justify-content: center; align-items: center;
+    font-family: var(--font);
+    font-size: 13px;
+    background-color: var(--nm-bg);
+    color: var(--nm-muted);
+    overflow-x: hidden;
+}
+
+/* ── Bouton retour ── */
+.auth-back {
+    position: fixed; top: 1.2rem; left: 1.5rem; z-index: 9999;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.55rem 1.1rem; border-radius: 50px;
+    color: var(--nm-muted);
+    font-size: 0.82rem; font-weight: 600;
+    text-decoration: none;
+    background: var(--nm-bg);
+    box-shadow: 4px 4px 10px var(--nm-shadow1), -4px -4px 10px var(--nm-shadow2);
+    transition: all var(--trans-fast);
+}
+
+.auth-back:hover {
+    color: var(--nm-primary);
+    box-shadow: 6px 6px 14px var(--nm-shadow1), -6px -6px 14px var(--nm-shadow2);
+    transform: translateX(-3px);
+}
+
+/* ════════════════════════════════════
+   CONTENEUR PRINCIPAL
+════════════════════════════════════ */
+.auth-main {
+    position: relative;
+    width: 1000px;
+    min-width: 1000px;
+    height: 620px;
+    padding: 25px;
+    background-color: var(--nm-bg);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+        12px 12px 20px var(--nm-shadow1),
+        -12px -12px 20px var(--nm-shadow2);
+}
+
+/* ── Responsive scale ── */
+@media (max-width: 1100px) { .auth-main { transform: scale(0.85); transform-origin: center; } }
+@media (max-width: 900px)  { .auth-main { transform: scale(0.72); } }
+@media (max-width: 720px)  { .auth-main { transform: scale(0.58); } }
+@media (max-width: 580px)  { .auth-main { transform: scale(0.46); } }
+@media (max-width: 440px)  { .auth-main { transform: scale(0.38); } }
+
+/* ════════════════════════════════════
+   PANNEAUX FORMULAIRES
+════════════════════════════════════ */
+.auth-container {
+    display: flex; justify-content: center; align-items: center;
+    position: absolute; top: 0;
+    width: 600px; height: 100%;
+    padding: 30px 50px;
+    background-color: var(--nm-bg);
+    transition: var(--transition);
+    overflow-y: auto;
+}
+
+/* Panneau A (Inscription) — droite par défaut */
+.a-container { z-index: 100; left: calc(100% - 600px); }
+
+/* Panneau B (Connexion) — droite aussi, caché derrière */
+.b-container { left: calc(100% - 600px); z-index: 0; }
+
+/* ── Formulaire ── */
+.auth-form {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; gap: 0;
+}
+
+.auth-form-title {
+    font-size: 2rem; font-weight: 800;
+    color: var(--nm-text); line-height: 1.2;
+    margin-bottom: 0.4rem;
+    background: var(--nm-grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.auth-form-sub {
+    font-size: 0.82rem; color: var(--nm-muted);
+    margin-bottom: 1.6rem; text-align: center;
+    line-height: 1.5;
+}
+
+/* ── Messages ── */
+.auth-error-box,
+.auth-success-box {
+    width: 100%; padding: 0.7rem 1rem;
+    border-radius: 10px;
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.82rem; font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.auth-error-box {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #b91c1c;
+}
+
+.auth-error-box i   { color: var(--nm-red); }
+
+.auth-success-box {
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: #166534;
+}
+
+.auth-success-box i { color: var(--nm-green); }
+
+/* ── Champs ── */
+.auth-input-wrap {
+    position: relative;
+    width: 100%; display: flex; align-items: center;
+    margin-bottom: 0.9rem;
+}
+
+.auth-input-icon {
+    position: absolute; left: 14px;
+    font-size: 0.85rem; color: var(--nm-muted);
+    pointer-events: none;
+    transition: color var(--trans-fast);
+    z-index: 1;
+}
+
+.auth-input-wrap:focus-within .auth-input-icon { color: var(--nm-primary); }
+
+.auth-input {
+    width: 100%; height: 44px;
+    padding: 0 38px 0 38px;
+    font-size: 0.85rem;
+    font-family: var(--font); font-weight: 500;
+    color: var(--nm-text);
+    border: none; outline: none;
+    background-color: var(--nm-bg);
+    border-radius: 10px;
+    box-shadow:
+        inset 3px 3px 7px var(--nm-shadow1),
+        inset -3px -3px 7px var(--nm-shadow2);
+    transition: box-shadow var(--trans-fast);
+    letter-spacing: 0.02em;
+}
+
+.auth-input::placeholder { color: var(--nm-muted); }
+
+.auth-input:focus {
+    box-shadow:
+        inset 4px 4px 9px var(--nm-shadow1),
+        inset -4px -4px 9px var(--nm-shadow2),
+        0 0 0 2px rgba(15,139,141,0.18);
+}
+
+.auth-input.auth-select {
+    appearance: none; cursor: pointer;
+    padding-right: 14px;
+}
+
+.date-input { color: var(--nm-muted); }
+.date-input:valid { color: var(--nm-text); }
+
+/* ── Œil (afficher mdp) ── */
+.auth-eye {
+    position: absolute; right: 12px;
+    background: none; border: none; cursor: pointer;
+    color: var(--nm-muted); font-size: 0.82rem;
+    transition: color var(--trans-fast);
+    padding: 0;
+}
+
+.auth-eye:hover { color: var(--nm-primary); }
+
+/* ── Ligne souvenir / oublié ── */
+.auth-row-between {
+    width: 100%; display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 0.8rem; font-size: 0.8rem;
+}
+
+.auth-remember {
+    display: flex; align-items: center; gap: 0.4rem; cursor: pointer;
+    color: var(--nm-muted);
+}
+
+.auth-remember input { accent-color: var(--nm-primary); width: 14px; height: 14px; }
+
+.auth-forgot {
+    color: var(--nm-primary); font-weight: 600;
+    text-decoration: none; font-size: 0.8rem;
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--trans-fast);
+}
+
+.auth-forgot:hover { border-bottom-color: var(--nm-primary); }
+
+/* ── Case à cocher CGU ── */
+.auth-checkbox-wrap {
+    width: 100%; display: flex; align-items: flex-start;
+    gap: 0.5rem; margin-bottom: 1rem;
+    font-size: 0.78rem; color: var(--nm-muted); line-height: 1.5;
+}
+
+.auth-checkbox-wrap input {
+    accent-color: var(--nm-primary);
+    width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px;
+}
+
+.auth-checkbox-wrap a { color: var(--nm-primary); font-weight: 600; }
+
+/* ── Bouton principal ── */
+.auth-btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.6rem;
+    width: 200px; height: 48px;
+    border-radius: 24px; border: none;
+    font-family: var(--font); font-weight: 700;
+    font-size: 0.9rem; letter-spacing: 0.04em;
+    color: #fff; cursor: pointer;
+    background: var(--nm-grad-btn);
+    box-shadow:
+        6px 6px 14px var(--nm-shadow1),
+        -6px -6px 14px var(--nm-shadow2),
+        0 4px 18px rgba(15,139,141,0.35);
+    transition: all var(--trans-fast);
+    margin-top: 0.4rem;
+}
+
+.auth-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        8px 8px 18px var(--nm-shadow1),
+        -8px -8px 18px var(--nm-shadow2),
+        0 8px 24px rgba(15,139,141,0.45);
+    filter: saturate(1.1);
+}
+
+.auth-btn:active {
+    transform: translateY(0);
+    box-shadow:
+        3px 3px 8px var(--nm-shadow1),
+        -3px -3px 8px var(--nm-shadow2),
+        0 2px 10px rgba(15,139,141,0.25);
+}
+
+.auth-btn-login {
+    background: linear-gradient(145deg, #14b8a6, #38bdf8);
+    box-shadow:
+        6px 6px 14px var(--nm-shadow1),
+        -6px -6px 14px var(--nm-shadow2),
+        0 4px 18px rgba(20,184,166,0.35);
+}
+
+/* ════════════════════════════════════
+   PANNEAU COULISSANT (switch)
+════════════════════════════════════ */
+.auth-switch {
+    display: flex; justify-content: center; align-items: center;
+    position: absolute; top: 0; left: 0;
+    width: 400px; height: 100%;
+    padding: 50px 45px;
+    z-index: 200;
+    background: var(--nm-grad);
+    overflow: hidden;
+    border-radius: 0 16px 16px 0;
+    box-shadow:
+        6px 0 20px rgba(15,139,141,0.25),
+        -4px 4px 10px var(--nm-shadow1);
+    transition: var(--transition);
+}
+
+/* Cercles décoratifs neumorphes dans le panneau */
+.switch-circle {
+    position: absolute;
+    width: 520px; height: 520px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    box-shadow:
+        inset 10px 10px 20px rgba(0,0,0,0.1),
+        inset -10px -10px 20px rgba(255,255,255,0.1);
+    bottom: -60%; left: -60%;
+    transition: var(--transition);
+}
+
+.switch-circle--top {
+    width: 320px; height: 320px;
+    top: -30%; left: 58%;
+    bottom: auto;
+}
+
+/* Croix médicale */
+.switch-cross {
+    position: absolute; top: 1.8rem; right: 2rem;
+    width: 36px; height: 36px;
+    opacity: 0.3;
+}
+
+.cross-h, .cross-v {
+    position: absolute; background: #fff; border-radius: 3px;
+}
+
+.cross-h { width: 100%; height: 32%; top: 34%; left: 0; }
+.cross-v { width: 32%; height: 100%; top: 0; left: 34%; }
+
+/* ECG déco */
+.switch-ecg {
+    position: absolute; bottom: 1.5rem; left: 0;
+    width: 100%; height: 50px; pointer-events: none;
+}
+
+/* Contenu texte */
+.switch-content {
+    display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+    position: absolute;
+    width: 360px; padding: 0 30px;
+    transition: var(--transition);
+}
+
+/* Logo croix Medicare */
+.switch-logo {
+    width: 56px; height: 56px;
+    background: rgba(255,255,255,0.18);
+    box-shadow:
+        inset 4px 4px 10px rgba(0,0,0,0.12),
+        inset -4px -4px 10px rgba(255,255,255,0.15);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: #fff;
+    margin-bottom: 1.4rem;
+    animation: pulseLogo 3s ease-in-out infinite;
+}
+
+@keyframes pulseLogo {
+    0%, 100% { box-shadow: inset 4px 4px 10px rgba(0,0,0,0.12), inset -4px -4px 10px rgba(255,255,255,0.15), 0 0 0 0 rgba(255,255,255,0.3); }
+    50%       { box-shadow: inset 4px 4px 10px rgba(0,0,0,0.12), inset -4px -4px 10px rgba(255,255,255,0.15), 0 0 0 10px rgba(255,255,255,0); }
+}
+
+.switch-title {
+    font-size: 1.8rem; font-weight: 800;
+    color: #fff; line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+.switch-desc {
+    font-size: 0.88rem; color: rgba(255,255,255,0.82);
+    line-height: 1.65; margin-bottom: 2rem;
+    letter-spacing: 0.01em;
+}
+
+/* Bouton switch (outline blanc) */
+.switch-btn {
+    width: 170px; height: 46px;
+    border-radius: 23px; border: 2px solid rgba(255,255,255,0.85);
+    background: transparent;
+    color: #fff; font-family: var(--font);
+    font-weight: 700; font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    box-shadow:
+        4px 4px 12px rgba(0,0,0,0.12),
+        -4px -4px 12px rgba(255,255,255,0.12);
+    transition: all var(--trans-fast);
+}
+
+.switch-btn:hover {
+    background: rgba(255,255,255,0.18);
+    box-shadow:
+        6px 6px 16px rgba(0,0,0,0.15),
+        -6px -6px 16px rgba(255,255,255,0.15);
+    transform: scale(0.985);
+}
+
+.switch-btn:active { transform: scale(0.97); }
+
+/* ════════════════════════════════════
+   ANIMATIONS COULISSANTES
+════════════════════════════════════ */
+
+/* Panneau switch → droite */
+.is-txr {
+    left: calc(100% - 400px) !important;
+    transition: var(--transition);
+    transform-origin: left;
+}
+
+/* Panneau formulaire → gauche */
+.is-txl {
+    left: 0 !important;
+    transition: var(--transition);
+    transform-origin: right;
+}
+
+/* Panneau B passe devant */
+.is-z200 { z-index: 200 !important; transition: var(--transition); }
+
+/* Contenu caché */
+.is-hidden {
+    visibility: hidden; opacity: 0;
+    position: absolute; transition: var(--transition);
+    pointer-events: none;
+}
+
+/* Animation elastique du panneau switch */
+.is-gx { animation: nmGx 1.25s; }
+
+@keyframes nmGx {
+    0%, 10%, 100% { width: 400px; }
+    30%, 50%      { width: 480px; }
+}
+
+/* ════════════════════════════════════
+   PAGE INSCRIPTION (/inscription)
+   Le panneau coulissant commence à droite
+   pour montrer le formulaire d'inscription
+════════════════════════════════════ */
+.is-register-page .auth-switch {
+    left: calc(100% - 400px);
+    border-radius: 16px 0 0 16px;
+}
+
+.is-register-page .a-container { left: 0; z-index: 200; }
+.is-register-page .b-container { left: 0; z-index: 100; }
+
+/* ── Scrollbar discrète dans le panneau formulaire ── */
+.auth-container::-webkit-scrollbar { width: 4px; }
+.auth-container::-webkit-scrollbar-track { background: transparent; }
+.auth-container::-webkit-scrollbar-thumb {
+    background: var(--nm-shadow1);
+    border-radius: 2px;
+}

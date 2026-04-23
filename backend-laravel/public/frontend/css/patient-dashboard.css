@@ -1,0 +1,257 @@
+.patient-dashboard-shell {
+    gap: 24px;
+}
+
+.patient-next-card {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(186, 230, 253, 0.92));
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    box-shadow: var(--shadow);
+}
+
+.patient-next-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.patient-next-card h2 {
+    margin: 8px 0 10px;
+    color: var(--primary-dark);
+    font-size: 30px;
+}
+
+.patient-next-card p {
+    margin: 0;
+    color: var(--gray-text);
+    line-height: 1.6;
+}
+
+.patient-turn-pill {
+    min-width: 96px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: var(--primary-color);
+    color: var(--white);
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.patient-next-grid,
+.patient-summary-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.patient-next-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 18px;
+}
+
+.patient-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.patient-stat-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--frozen-water);
+}
+
+.patient-stat-card span {
+    display: block;
+    color: var(--gray-text);
+    margin-bottom: 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.patient-stat-card strong {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.patient-next-message {
+    font-weight: 600;
+    color: var(--primary-dark) !important;
+}
+
+.patient-note-card {
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px solid var(--frozen-water);
+    background: var(--light-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.patient-note-card strong {
+    color: var(--dark-text);
+}
+
+.patient-note-card span {
+    color: var(--gray-text);
+    font-size: 13px;
+}
+
+.patient-form-card {
+    background: var(--light-bg);
+    border-radius: var(--radius-md);
+    padding: 22px;
+}
+
+.patient-calendar-day {
+    min-height: 84px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 8px;
+}
+
+.patient-calendar-day.unavailable {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.day-number {
+    font-weight: 700;
+}
+
+.day-meta {
+    font-size: 11px;
+    color: var(--gray-text);
+    text-align: center;
+    line-height: 1.4;
+}
+
+.slot-picker-meta {
+    margin-bottom: 12px;
+    color: var(--gray-text);
+    line-height: 1.5;
+}
+
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+}
+
+.slot-chip {
+    border: 1px solid var(--primary-color);
+    background: var(--white);
+    color: var(--primary-color);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.slot-chip:hover,
+.slot-chip.active {
+    background: var(--primary-color);
+    color: var(--white);
+    transform: translateY(-2px);
+}
+
+.patient-appointment-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.patient-appointment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.patient-inline-btn {
+    padding: 10px 14px;
+}
+
+.patient-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.patient-info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--light-bg);
+    border: 1px solid var(--frozen-water);
+}
+
+.patient-info-row span {
+    color: var(--gray-text);
+}
+
+.patient-info-row strong {
+    color: var(--dark-text);
+    text-align: right;
+}
+
+.patient-ordonnance-modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.patient-ordonnance-sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.patient-ordonnance-sheet p {
+    margin: 0;
+    color: var(--gray-text);
+}
+
+.patient-ordonnance-content {
+    padding: 18px;
+    border-radius: 14px;
+    background: var(--light-bg);
+    border: 1px solid var(--frozen-water);
+    line-height: 1.8;
+    color: var(--dark-text);
+}
+
+@media (max-width: 1200px) {
+    .patient-next-grid,
+    .patient-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .patient-next-card__header,
+    .patient-info-row,
+    .patient-appointment-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .patient-next-grid,
+    .patient-summary-grid,
+    .slot-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-turn-pill {
+        min-width: 0;
+        width: 100%;
+    }
+}

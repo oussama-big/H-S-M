@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Services\DoctorService;
 use Illuminate\Http\Request;
 use Exception;
+use App\Models\Ordonnance;
+use App\Models\Consultation;
+use App\Models\DossierMedical;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class OrdonnanceController extends Controller
 {
@@ -85,4 +90,24 @@ class OrdonnanceController extends Controller
             return back()->with('error', 'Suppression impossible.');
         }
     }
+
+    // Dans ta classe OrdonnanceController
+       public function downloadPDF($id)
+{
+    try {
+        $ordonnance = $this->doctorService->getOrdonnanceById($id);
+        
+        // On s'assure que le user du patient est chargé pour avoir le nom
+        $ordonnance->consultation->dossierMedical->patient->load('user');
+
+        $pdf = Pdf::loadView('ordonnances.pdf', compact('ordonnance'));
+        
+        // On récupère le nom depuis la relation user
+        $patientName = $ordonnance->consultation->dossierMedical->patient->user->name;
+        
+        return $pdf->stream('ordonnance_' . $patientName . '.pdf');
+    } catch (Exception $e) {
+        return back()->with('error', 'Erreur : ' . $e->getMessage());
+    }
+}
 }

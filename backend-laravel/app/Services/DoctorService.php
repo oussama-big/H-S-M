@@ -1,28 +1,26 @@
 <?php
+
 namespace App\Services;
 
-use App\Models\Doctor;
-use App\Models\User;
 use App\Models\Appointment;
 use App\Models\Consultation;
-use App\Models\Ordonnance;
+use App\Models\Doctor;
 use App\Models\DossierMedical;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Ordonnance;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-class DoctorService {
-
+class DoctorService
+{
     private UserService $userService;
 
-    public function __construct(UserService $userService) {
+    public function __construct(UserService $userService)
+    {
         $this->userService = $userService;
     }
 
-    // =============================
-    // 1. DOCTOR REGISTRATION & MANAGEMENT
-    // =============================
-
-    public function registerDoctor(array $data) {
+    public function registerDoctor(array $data)
+    {
         if (User::where('email', $data['email'])->exists()) {
             throw new \Exception('Email already registered');
         }
@@ -30,6 +28,7 @@ class DoctorService {
         $user = $this->userService->createBaseUser([
             'nom' => $data['nom'],
             'prenom' => $data['prenom'],
+            'login' => $data['login'] ?? null,
             'email' => $data['email'],
             'password' => $data['password'],
             'role' => 'MEDECIN',
@@ -40,72 +39,74 @@ class DoctorService {
             'id' => $user->id,
             'license_number' => $data['license_number'] ?? null,
             'specialization' => $data['specialization'] ?? null,
+            'cabinet_id' => $data['cabinet_id'] ?? null,
         ]);
     }
 
-    public function getDoctorById($doctorId) {
-        $doctor = Doctor::with('user', 'appointments', 'consultations')->find($doctorId);
-        
-        if (!$doctor) {
+    public function getDoctorById($doctorId)
+    {
+        $doctor = Doctor::with(['user', 'appointments', 'consultations', 'cabinet'])->find($doctorId);
+
+        if (! $doctor) {
             throw new ModelNotFoundException('Doctor not found');
         }
 
         return $doctor;
     }
 
-    public function getAllDoctors() {
-        return Doctor::with('user')->get();
+    public function getAllDoctors()
+    {
+        return Doctor::with(['user', 'cabinet'])->get();
     }
 
-    public function updateDoctor($doctorId, array $data) {
+    public function updateDoctor($doctorId, array $data)
+    {
         $doctor = Doctor::find($doctorId);
-        
-        if (!$doctor) {
+
+        if (! $doctor) {
             throw new ModelNotFoundException('Doctor not found');
         }
 
-        // Update user data if provided
-        if (isset($data['nom']) || isset($data['prenom']) || isset($data['email'])) {
+        if (isset($data['nom']) || isset($data['prenom']) || isset($data['email']) || isset($data['login'])) {
             $doctor->user()->update(array_filter([
                 'nom' => $data['nom'] ?? null,
                 'prenom' => $data['prenom'] ?? null,
+                'login' => $data['login'] ?? null,
                 'email' => $data['email'] ?? null,
                 'telephone' => $data['telephone'] ?? null,
-            ], fn($value) => $value !== null));
+            ], fn ($value) => $value !== null));
         }
 
-        // Update doctor specific data
         $doctorData = array_filter([
             'specialization' => $data['specialization'] ?? null,
             'license_number' => $data['license_number'] ?? null,
-        ], fn($value) => $value !== null);
+            'cabinet_id' => $data['cabinet_id'] ?? null,
+        ], fn ($value) => $value !== null);
 
-        if (!empty($doctorData)) {
+        if (! empty($doctorData)) {
             $doctor->update($doctorData);
         }
 
         return $doctor;
     }
 
-    public function deleteDoctor($doctorId) {
+    public function deleteDoctor($doctorId)
+    {
         $doctor = Doctor::find($doctorId);
-        
-        if (!$doctor) {
+
+        if (! $doctor) {
             throw new ModelNotFoundException('Doctor not found');
         }
 
-        // Delete related user
         $doctor->user()->delete();
+
         return $doctor->delete();
     }
 
-    // =============================
-    // 2. APPOINTMENTS
-    // =============================
-
-    public function createAppointment(array $data) {
+    public function createAppointment(array $data)
+    {
         $this->validateDoctorExists($data['doctor_id']);
-        
+
         return Appointment::create([
             'patient_id' => $data['patient_id'],
             'doctor_id' => $data['doctor_id'],
@@ -115,53 +116,57 @@ class DoctorService {
         ]);
     }
 
-    public function getAppointmentById($appointmentId) {
+    public function getAppointmentById($appointmentId)
+    {
         $appointment = Appointment::with('patient', 'doctor', 'consultation')->find($appointmentId);
-        
-        if (!$appointment) {
+
+        if (! $appointment) {
             throw new ModelNotFoundException('Appointment not found');
         }
 
         return $appointment;
     }
 
-    public function getAppointmentsByDoctor($doctorId) {
+    public function getAppointmentsByDoctor($doctorId)
+    {
         $this->validateDoctorExists($doctorId);
+
         return Appointment::where('doctor_id', $doctorId)->with('patient')->get();
     }
 
-    public function getAppointmentsByPatient($patientId) {
+    public function getAppointmentsByPatient($patientId)
+    {
         return Appointment::where('patient_id', $patientId)->with('doctor')->get();
     }
 
-    public function updateAppointment($appointmentId, array $data) {
+    public function updateAppointment($appointmentId, array $data)
+    {
         $appointment = Appointment::find($appointmentId);
-        
-        if (!$appointment) {
+
+        if (! $appointment) {
             throw new ModelNotFoundException('Appointment not found');
         }
 
         $appointment->update($data);
+
         return $appointment;
     }
 
-    public function deleteAppointment($appointmentId) {
+    public function deleteAppointment($appointmentId)
+    {
         $appointment = Appointment::find($appointmentId);
-        
-        if (!$appointment) {
+
+        if (! $appointment) {
             throw new ModelNotFoundException('Appointment not found');
         }
 
         return $appointment->delete();
     }
 
-    // =============================
-    // 3. CONSULTATIONS
-    // =============================
-
-    public function createConsultation(array $data) {
+    public function createConsultation(array $data)
+    {
         $this->validateDoctorExists($data['doctor_id']);
-        
+
         return Consultation::create([
             'doctor_id' => $data['doctor_id'],
             'appointment_id' => $data['appointment_id'],
@@ -171,42 +176,43 @@ class DoctorService {
         ]);
     }
 
-    public function getConsultationById($consultationId) {
+    public function getConsultationById($consultationId)
+    {
         $consultation = Consultation::with('doctor', 'appointment', 'dossierMedical', 'ordonnance')->find($consultationId);
-        
-        if (!$consultation) {
+
+        if (! $consultation) {
             throw new ModelNotFoundException('Consultation not found');
         }
 
         return $consultation;
     }
 
-    public function updateConsultation($consultationId, array $data) {
+    public function updateConsultation($consultationId, array $data)
+    {
         $consultation = Consultation::find($consultationId);
-        
-        if (!$consultation) {
+
+        if (! $consultation) {
             throw new ModelNotFoundException('Consultation not found');
         }
 
         $consultation->update($data);
+
         return $consultation;
     }
 
-    public function deleteConsultation($consultationId) {
+    public function deleteConsultation($consultationId)
+    {
         $consultation = Consultation::find($consultationId);
-        
-        if (!$consultation) {
+
+        if (! $consultation) {
             throw new ModelNotFoundException('Consultation not found');
         }
 
         return $consultation->delete();
     }
 
-    // =============================
-    // 4. ORDONNANCES
-    // =============================
-
-    public function createOrdonnance(array $data) {
+    public function createOrdonnance(array $data)
+    {
         return Ordonnance::create([
             'consultation_id' => $data['consultation_id'],
             'details' => $data['details'],
@@ -214,66 +220,65 @@ class DoctorService {
         ]);
     }
 
-    public function getOrdonnanceById($ordonnanceId) {
+    public function getOrdonnanceById($ordonnanceId)
+    {
         $ordonnance = Ordonnance::with('consultation')->find($ordonnanceId);
-        
-        if (!$ordonnance) {
+
+        if (! $ordonnance) {
             throw new ModelNotFoundException('Ordonnance not found');
         }
 
         return $ordonnance;
     }
 
-    public function updateOrdonnance($ordonnanceId, array $data) {
+    public function updateOrdonnance($ordonnanceId, array $data)
+    {
         $ordonnance = Ordonnance::find($ordonnanceId);
-        
-        if (!$ordonnance) {
+
+        if (! $ordonnance) {
             throw new ModelNotFoundException('Ordonnance not found');
         }
 
         $ordonnance->update($data);
+
         return $ordonnance;
     }
 
-    public function deleteOrdonnance($ordonnanceId) {
+    public function deleteOrdonnance($ordonnanceId)
+    {
         $ordonnance = Ordonnance::find($ordonnanceId);
-        
-        if (!$ordonnance) {
+
+        if (! $ordonnance) {
             throw new ModelNotFoundException('Ordonnance not found');
         }
 
         return $ordonnance->delete();
     }
 
-    // =============================
-    // 5. DOSSIER MEDICAL
-    // =============================
-
-    public function getPatientMedicalRecord($patientId) {
+    public function getPatientMedicalRecord($patientId)
+    {
         return DossierMedical::where('patient_id', $patientId)
             ->with('consultations', 'patient')
             ->first();
     }
 
-    public function updateDossierMedical($dossierId, array $data) {
+    public function updateDossierMedical($dossierId, array $data)
+    {
         $dossier = DossierMedical::find($dossierId);
-        
-        if (!$dossier) {
+
+        if (! $dossier) {
             throw new ModelNotFoundException('Dossier medical not found');
         }
 
         $dossier->update($data);
+
         return $dossier;
     }
 
-    // =============================
-    // HELPERS
-    // =============================
-
-    private function validateDoctorExists($doctorId) {
-        if (!Doctor::find($doctorId)) {
+    private function validateDoctorExists($doctorId)
+    {
+        if (! Doctor::find($doctorId)) {
             throw new ModelNotFoundException('Doctor not found');
         }
     }
 }
-?>

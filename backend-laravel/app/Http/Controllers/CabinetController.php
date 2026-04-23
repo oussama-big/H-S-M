@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\CabinetService;
-use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Http\Request;
 
 class CabinetController extends Controller
 {
@@ -15,91 +15,129 @@ class CabinetController extends Controller
         $this->cabinetService = $cabinetService;
     }
 
-    /**
-     * Liste des cabinets (Vue)
-     */
-    public function index()
+    public function index(Request $request)
     {
         $cabinets = $this->cabinetService->getAllCabinets();
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'data' => $cabinets,
+            ]);
+        }
+
         return view('cabinets.index', compact('cabinets'));
     }
 
-    /**
-     * Formulaire de création
-     */
     public function create()
     {
         return view('cabinets.create');
     }
 
-    /**
-     * Enregistrement d'un nouveau cabinet
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:cabinets,name',
-            'address' => 'required|string|max:500',
+            'nom' => 'required|string|max:255|unique:cabinets,nom',
+            'adresse' => 'required|string|max:500',
             'telephone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
         ]);
 
         try {
-            $this->cabinetService->createCabinet($data);
-            return redirect()->route('cabinets.index')->with('success', 'Le cabinet a été créé avec succès.');
+            $cabinet = $this->cabinetService->createCabinet($data);
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $cabinet,
+                ], 201);
+            }
+
+            return redirect()->route('cabinets.index')->with('success', 'Le cabinet a ete cree avec succes.');
         } catch (Exception $e) {
             return back()->withInput()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 
-    /**
-     * Détails d'un cabinet (avec ses médecins)
-     */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $cabinet = $this->cabinetService->getCabinetInfo($id);
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'data' => $cabinet,
+            ]);
+        }
+
         return view('cabinets.show', compact('cabinet'));
     }
 
-    /**
-     * Formulaire d'édition
-     */
     public function edit($id)
     {
-        $cabinet = $this->cabinetService->getCabinetInfo($id);
+        $cabinet = $this->cabinetService->getCabinetById($id);
+
         return view('cabinets.edit', compact('cabinet'));
     }
 
-    /**
-     * Mise à jour du cabinet
-     */
     public function update(Request $request, $id)
     {
         $data = $request->validate([
-            'name' => 'nullable|string|max:255|unique:cabinets,name,' . $id,
-            'address' => 'nullable|string|max:500',
+            'nom' => 'nullable|string|max:255|unique:cabinets,nom,' . $id,
+            'adresse' => 'nullable|string|max:500',
             'telephone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
         ]);
 
         try {
-            $this->cabinetService->updateCabinet($id, $data);
-            return redirect()->route('cabinets.index')->with('success', 'Cabinet mis à jour.');
+            $cabinet = $this->cabinetService->updateCabinet($id, $data);
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $cabinet,
+                ]);
+            }
+
+            return redirect()->route('cabinets.index')->with('success', 'Cabinet mis a jour.');
         } catch (Exception $e) {
-            return back()->with('error', 'Échec de la modification.');
+            return back()->with('error', 'Echec de la modification.');
         }
     }
 
-    /**
-     * Suppression
-     */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         try {
             $this->cabinetService->deleteCabinet($id);
-            return redirect()->route('cabinets.index')->with('success', 'Cabinet supprimé.');
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cabinet supprime.',
+                ]);
+            }
+
+            return redirect()->route('cabinets.index')->with('success', 'Cabinet supprime.');
         } catch (Exception $e) {
             return back()->with('error', 'Suppression impossible.');
         }
+    }
+
+    public function getDoctors($id)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->cabinetService->getCabinetDoctors($id),
+        ]);
+    }
+
+    public function searchByName(Request $request)
+    {
+        $name = $request->query('name', $request->query('q', ''));
+
+        return response()->json([
+            'success' => true,
+            'data' => $name === '' ? [] : $this->cabinetService->getCabinetsByName($name),
+        ]);
     }
 }

@@ -15,7 +15,7 @@ class NotificationService
     {
         return Notification::create([
             'user_id' => $data['user_id'],
-            'content' => $data['content'],
+            'contenu' => $data['contenu'] ?? $data['content'],
             'date' => now(),
         ]);
     }
@@ -69,6 +69,22 @@ class NotificationService
             ->update(['is_read' => true]);
     }
 
+    public function updateNotification($notificationId, array $data)
+    {
+        $notification = Notification::find($notificationId);
+
+        if (!$notification) {
+            throw new ModelNotFoundException('Notification not found');
+        }
+
+        $notification->update(array_filter([
+            'contenu' => $data['contenu'] ?? null,
+            'is_read' => $data['is_read'] ?? null,
+        ], fn($value) => $value !== null));
+
+        return $notification;
+    }
+
     public function getRecentNotifications($userId, $days = 7)
     {
         return Notification::where('user_id', $userId)
@@ -81,7 +97,7 @@ class NotificationService
     {
         return Notification::create([
             'user_id' => $userId,
-            'content' => 'Appointment scheduled: ' . $appointmentDetails,
+            'contenu' => 'Appointment scheduled: ' . $appointmentDetails,
             'date' => now(),
         ]);
     }
@@ -90,7 +106,7 @@ class NotificationService
     {
         return Notification::create([
             'user_id' => $userId,
-            'content' => 'Consultation completed: ' . $consultationDetails,
+            'contenu' => 'Consultation completed: ' . $consultationDetails,
             'date' => now(),
         ]);
     }

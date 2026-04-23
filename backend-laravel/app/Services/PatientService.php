@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\DossierMedical;
 use App\Models\Patient;
 use App\Models\User;
-use App\Models\DossierMedical;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PatientService
 {
@@ -23,42 +24,47 @@ class PatientService
 
     public function registerPatient(array $data)
     {
-        if (User::where('email', $data['email'])->exists()) {
-            throw new \Exception('Email already registered');
-        }
+        return DB::transaction(function () use ($data) {
+            if (User::where('email', $data['email'])->exists()) {
+                throw ValidationException::withMessages([
+                    'email' => 'Cet email est deja utilise.',
+                ]);
+            }
 
-        $user = $this->userService->createBaseUser([
-            'nom' => $data['nom'],
-            'prenom' => $data['prenom'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'role' => 'PATIENT',
-            'telephone' => $data['telephone'] ?? null,
-        ]);
+            $user = $this->userService->createBaseUser([
+                'nom' => $data['nom'],
+                'prenom' => $data['prenom'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'role' => 'PATIENT',
+                'telephone' => $data['telephone'] ?? null,
+            ]);
 
-        $patient = Patient::create([
-            'id' => $user->id,
-            'numDossier' => 'PAT-' . strtoupper(uniqid()),
-            'date_of_birth' => $data['date_of_birth'] ?? null,
-            'gender' => $data['gender'] ?? null,
-            'blood_type' => $data['blood_type'] ?? null,
-            'emergency_contact' => $data['emergency_contact'] ?? null,
-        ]);
+            $patient = Patient::create([
+                'id' => $user->id,
+                'numDossier' => 'PAT-' . strtoupper(uniqid()),
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'gender' => $data['gender'] ?? null,
+                'blood_type' => $data['blood_type'] ?? null,
+                'emergency_contact' => $data['emergency_contact'] ?? null,
+            ]);
 
-        // Create medical record for patient
-        DossierMedical::create([
-            'patient_id' => $patient->id,
-            'diagnosis' => null,
-            'treatment_plan' => null,
-        ]);
+            DossierMedical::firstOrCreate(
+                ['patient_id' => $patient->id],
+                [
+                    'diagnosis' => null,
+                    'treatment_plan' => null,
+                ]
+            );
 
-        return $patient;
+            return $patient->load(['user', 'dossierMedical']);
+        });
     }
 
     public function getPatientById($patientId)
     {
         $patient = Patient::with('user', 'appointments', 'dossierMedical')->find($patientId);
-        
+
         if (!$patient) {
             throw new ModelNotFoundException('Patient not found');
         }
@@ -74,12 +80,11 @@ class PatientService
     public function updatePatient($patientId, array $data)
     {
         $patient = Patient::find($patientId);
-        
+
         if (!$patient) {
             throw new ModelNotFoundException('Patient not found');
         }
 
-        // Update user data if provided
         if (isset($data['nom']) || isset($data['prenom']) || isset($data['email'])) {
             $patient->user()->update(array_filter([
                 'nom' => $data['nom'] ?? null,
@@ -89,7 +94,6 @@ class PatientService
             ], fn($value) => $value !== null));
         }
 
-        // Update patient specific data
         $patientData = array_filter([
             'date_of_birth' => $data['date_of_birth'] ?? null,
             'gender' => $data['gender'] ?? null,
@@ -107,13 +111,13 @@ class PatientService
     public function deletePatient($patientId)
     {
         $patient = Patient::find($patientId);
-        
+
         if (!$patient) {
             throw new ModelNotFoundException('Patient not found');
         }
 
-        // Delete related user
         $patient->user()->delete();
+
         return $patient->delete();
     }
 
@@ -124,7 +128,7 @@ class PatientService
     public function getPatientMedicalInfo($patientId)
     {
         $patient = Patient::with('dossierMedical.consultations')->find($patientId);
-        
+
         if (!$patient) {
             throw new ModelNotFoundException('Patient not found');
         }
@@ -135,7 +139,7 @@ class PatientService
     public function getPatientAppointments($patientId)
     {
         $patient = Patient::find($patientId);
-        
+
         if (!$patient) {
             throw new ModelNotFoundException('Patient not found');
         }
@@ -146,7 +150,7 @@ class PatientService
     public function getPatientConsultationHistory($patientId)
     {
         $patient = Patient::with('dossierMedical.consultations.doctor.user')->find($patientId);
-        
+
         if (!$patient) {
             throw new ModelNotFoundException('Patient not found');
         }
@@ -159,8 +163,8 @@ class PatientService
         return Patient::with('user')
             ->whereHas('user', function ($q) use ($query) {
                 $q->where('nom', 'like', '%' . $query . '%')
-                  ->orWhere('prenom', 'like', '%' . $query . '%')
-                  ->orWhere('email', 'like', '%' . $query . '%');
+                    ->orWhere('prenom', 'like', '%' . $query . '%')
+                    ->orWhere('email', 'like', '%' . $query . '%');
             })
             ->orWhere('numDossier', 'like', '%' . $query . '%')
             ->get();

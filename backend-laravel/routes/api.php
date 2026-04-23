@@ -12,7 +12,11 @@ use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\DossierMedicalController;
 use App\Http\Controllers\CabinetController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DoctorDashboardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PatientDashboardController;
+use App\Http\Controllers\SecretaryDashboardController;
 
 // ==================== PUBLIC ROUTES ====================
 
@@ -34,6 +38,25 @@ Route::post('/secretaries/register', [SecretaryController::class, 'register'])->
 // Toutes les routes ci-dessous nécessitent une authentification via JWT/Sanctum
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/admin/dashboard-data', [DashboardController::class, 'adminData'])->name('admin.dashboard.data');
+    Route::get('/doctor/dashboard-data', [DoctorDashboardController::class, 'data'])->name('doctor.dashboard.data');
+    Route::get('/doctor/patients/find-by-email', [DoctorDashboardController::class, 'findPatientByEmail'])->name('doctor.dashboard.patients.find-by-email');
+    Route::post('/doctor/appointments', [DoctorDashboardController::class, 'storeAppointment'])->name('doctor.dashboard.appointments.store');
+    Route::put('/doctor/appointments/{appointment}/notes', [DoctorDashboardController::class, 'saveNotes'])->name('doctor.dashboard.appointments.notes');
+    Route::patch('/doctor/appointments/{appointment}/reschedule', [DoctorDashboardController::class, 'reschedule'])->name('doctor.dashboard.appointments.reschedule');
+    Route::post('/doctor/appointments/{appointment}/complete', [DoctorDashboardController::class, 'complete'])->name('doctor.dashboard.appointments.complete');
+    Route::get('/patient/dashboard-data', [PatientDashboardController::class, 'data'])->name('patient.dashboard.data');
+    Route::get('/patient/doctors/{doctor}/availability-calendar', [PatientDashboardController::class, 'availabilityCalendar'])->name('patient.dashboard.availability-calendar');
+    Route::get('/patient/doctors/{doctor}/available-slots', [PatientDashboardController::class, 'availableSlots'])->name('patient.dashboard.available-slots');
+    Route::post('/patient/appointments', [PatientDashboardController::class, 'storeAppointment'])->name('patient.dashboard.appointments.store');
+    Route::patch('/patient/appointments/{appointment}', [PatientDashboardController::class, 'updateAppointment'])->name('patient.dashboard.appointments.update');
+    Route::post('/admin/patients/{id}/reset-password', [PatientController::class, 'resetPassword'])->name('admin.patients.reset-password');
+    Route::post('/admin/doctors/{id}/reset-password', [DoctorController::class, 'resetPassword'])->name('admin.doctors.reset-password');
+    Route::post('/admin/secretaries/{id}/reset-password', [SecretaryController::class, 'resetPassword'])->name('admin.secretaries.reset-password');
+    Route::get('/secretary/dashboard-data', [SecretaryDashboardController::class, 'data'])->name('secretary.dashboard.data');
+    Route::get('/secretary/doctors/{doctor}/available-slots', [SecretaryDashboardController::class, 'availableSlots'])->name('secretary.dashboard.available-slots');
+    Route::post('/secretary/patients', [SecretaryDashboardController::class, 'storePatient'])->name('secretary.dashboard.patients.store');
+    Route::post('/secretary/appointments', [SecretaryDashboardController::class, 'storeAppointment'])->name('secretary.dashboard.appointments.store');
     
     // ==================== AUTH ====================
     Route::post('/logout', [AuthController::class, 'logout']);

@@ -1,10 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\AuthService;
-use App\Services\PatientService;
 use App\Services\DoctorService;
+use App\Services\PatientService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
@@ -23,58 +24,86 @@ class AuthController extends Controller
         $this->doctorService = $doctorService;
     }
 
-    // Affiche le formulaire de login
-    public function showLogin() {
+    public function showLogin()
+    {
         return view('auth.login');
     }
 
-    // Gère la connexion
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
+        if ($request->is('api/*') || $request->expectsJson() || $request->wantsJson()) {
+            return $this->loginAPI($credentials);
+        }
+
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('dashboard')->with('success', 'Bienvenue !');
+
+            return redirect()->intended(route('backoffice.dashboard'))->with('success', 'la connexion est reussit');
         }
 
         return back()->withErrors(['email' => 'Identifiants incorrects.'])->onlyInput('email');
     }
 
-    // Affiche le formulaire d'inscription
-    public function showRegister() {
+    private function loginAPI(array $credentials)
+    {
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'la connexion est reussit',
+                'data' => [
+                    'user' => $user,
+                    'access_token' => $token,
+                    'token_type' => 'Bearer',
+                ],
+            ], 200);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Email ou mot de passe incorrect',
+        ], 401);
+    }
+
+    public function showRegister()
+    {
         return view('auth.register');
     }
 
-    // Gère l'inscription
-    public function register(Request $request) {
+    public function register(Request $request)
+    {
         $data = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:PATIENT,MEDECIN',
-            // Champs optionnels
             'telephone' => 'nullable',
             'specialization' => 'nullable',
         ]);
 
-        if ($data['role'] === 'PATIENT') {
-            $user = $this->patientService->registerPatient($data);
-        } else {
-            $user = $this->doctorService->registerDoctor($data);
-        }
+        $user = $data['role'] === 'PATIENT'
+            ? $this->patientService->registerPatient($data)->user
+            : $this->doctorService->registerDoctor($data)->user;
 
         Auth::login($user);
-        return redirect()->route('dashboard');
+
+        return redirect()->route('backoffice.dashboard');
     }
 
-    // Déconnexion
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/')->with('success', 'Vous avez été déconnecté.');    }
+
+        return redirect('/')->with('success', 'Vous avez ete deconnecte.');
+    }
 }
